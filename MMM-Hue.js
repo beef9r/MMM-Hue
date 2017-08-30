@@ -7,152 +7,170 @@
  * MIT Licensed.
  */
 
-Module.register("MMM-Hue", {
+Module.register('MMM-Hue', {
 
-    // Default module config.
-    defaults: {
-        bridgeip: "",
-        userid: "",
-        colour: false,
-        refreshTime: 60 * 10000,
-        lightsorgroups: "groups",
-        showOnlyOn: false,
-        showLabel: true,
-        hideSpecificGroups: false,
-        hideGroupsWithString: 'hgrp'
+	// Default module config.
+	defaults: {
+		bridgeip: '',
+		userid: '',
+		colour: false,
+		refreshTime: 60 * 10000,
+		lightsorgroups: 'groups',
+		showOnlyOn: false,
+		showLabel: true,
+		hideSpecificGroups: false,
+		hideGroupsWithString: 'hgrp',
 
-    },
-    // Define required scripts.
-    getScripts: function () {
-        return [this.file("js/jquery.js")];
-    },
-    getStyles: function () {
+		// HOMEBRIDGE
+		homebridgeUrls: []
+	},
+	// Define required scripts.
+	getScripts: function () {
+		return [this.file('js/jquery.js')];
+	},
+	getStyles: function () {
 
-        return ["font-awesome.css", "MMM-Hue.css"];
-    },
-    // Define required translations.
-    getTranslations: function() {
-      return {
-        'en': 'translations/en.json',
-        'id': 'translations/id.json'
-      };
-    },
-    // Define start sequence.
-    start: function () {
-        //These will be moved to config in a later release
-        this.lightsorgroups = this.config.lightsorgroups;
-        this.updateInterval = this.config.refreshTime; // updates every 10 minutes
-        this.animationSpeed = 2 * 1000;
-        this.initialLoadDelay = 0;
-        //end
-        var result = false;
-        this.url = "http://" + this.config.bridgeip + "/api/" + this.config.userid + "/" + this.lightsorgroups;
-        this.getData();
-        setInterval(() => {
-            this.getData();
-        }, this.updateInterval);
-    },
+		return ['font-awesome.css', 'MMM-Hue.css'];
+	},
+	// Define required translations.
+	getTranslations: function () {
+		return {
+			'en': 'translations/en.json',
+			'id': 'translations/id.json'
+		};
+	},
+	// Define start sequence.
+	start: function () {
+		//These will be moved to config in a later release
+		this.lightsorgroups = this.config.lightsorgroups;
+		this.updateInterval = this.config.refreshTime; // updates every 10 minutes
+		this.animationSpeed = 2 * 1000;
+		this.initialLoadDelay = 0;
+		//end
+		var result = false;
+		this.url = 'http://' + this.config.bridgeip + '/api/' + this.config.userid + '/' + this.lightsorgroups;
+		this.homebridgeUrls = this.config.homebridgeUrls;
+		this.getData();
+		setInterval(() => {
+			this.getData();
+		}, this.updateInterval);
+	},
 
-    // Override dom generator.
-    getDom: function () {
-        var wrapper = document.createElement("div");
-        //alert("http://" + this.config.bridgeip + "/api/" + this.config.userid + "/" + this.config.lightsorgroups);
+	// Override dom generator.
+	getDom: function () {
+		var wrapper = document.createElement('div');
+		//alert("http://" + this.config.bridgeip + "/api/" + this.config.userid + "/" + this.config.lightsorgroups);
 
-        if (this.result) {
+		if (this.result) {
 
-            var table = document.createElement("table");
-            table.classList.add("small", "table", "align-left");
+			var table = document.createElement('table');
+			table.classList.add('small', 'table', 'align-left');
 
-            if (this.config.showLabel)
-              table.appendChild(this.createLabelRow());
+			if (this.config.showLabel) {
+				table.appendChild(this.createLabelRow());
+			}
 
-            var lamps = Object.keys(this.result);
+			var lamps = Object.keys(this.result);
 
-            for (var i = 0; i < lamps.length; i++) {
-                var groupName = this.result[lamps[i]].name;
-                console.debug(groupName, groupName.includes('hgrp'));
+			for (var i = 0; i < lamps.length; i++) {
+				var groupName = this.result[lamps[i]].name;
+				console.debug(groupName, groupName.includes('hgrp'));
 
-                if (this.config.showOnlyOn) {
-                    if (this.config.hideSpecificGroups && !groupName.includes(this.config.hideGroupsWithString)) {
-                        if (this.result[lamps[i]].state.all_on || this.result[lamps[i]].state.any_on) {
-                            domAction(this.result,lamps[i],this.config);
-                        }
-                    } else if (!this.config.hideSpecificGroups) {
-                        domAction(this.result,lamps[i],this.config);
-                    }
-                } else {
-                    if (this.config.hideSpecificGroups && !groupName.includes(this.config.hideGroupsWithString)) {
-                        domAction(this.result,lamps[i],this.config);
-                    } else if (!this.config.hideSpecificGroups) {
-                        domAction(this.result,lamps[i],this.config);
-                    }
-                }
+				if (this.config.showOnlyOn) {
+					if (this.config.hideSpecificGroups && !groupName.includes(this.config.hideGroupsWithString)) {
+						if (this.result[lamps[i]].state.all_on || this.result[lamps[i]].state.any_on) {
+							domAction(this.result, lamps[i], this.config);
+						}
+					} else if (!this.config.hideSpecificGroups) {
+						domAction(this.result, lamps[i], this.config);
+					}
+				} else {
+					if (this.config.hideSpecificGroups && !groupName.includes(this.config.hideGroupsWithString)) {
+						domAction(this.result, lamps[i], this.config);
+					} else if (!this.config.hideSpecificGroups) {
+						domAction(this.result, lamps[i], this.config);
+					}
+				}
 
 
-            }
+			}
 
-            function domAction(result, lamp, config) {
-                var row = document.createElement("tr");
-                var room = document.createElement("td");
-                console.debug(result[lamp]);
-                room.innerHTML = result[lamp].name;
-                row.appendChild(room);
-                var lightsallLabel = document.createElement("td");
-                lightsallLabel.classList.add("centered");
+			function domAction(result, lamp, config) {
+				var row = document.createElement('tr');
+				var room = document.createElement('td');
+				console.debug(result[lamp]);
+				room.innerHTML = result[lamp].name;
+				row.appendChild(room);
+				var lightsallLabel = document.createElement('td');
+				lightsallLabel.classList.add('centered');
 
-                var lightstatus = document.createElement("i");
-                lightstatus.classList.add("fa", result[lamp].state.all_on ? "fa-lightbulb-o" : (result[lamp].state.any_on ? "fa-adjust" : "fa-times"));
-                if (config.colour) {
+				var lightstatus = document.createElement('i');
+				lightstatus.classList.add('fa', result[lamp].state.all_on ? 'fa-lightbulb-o' : (result[lamp].state.any_on ? 'fa-adjust' : 'fa-times'));
+				if (config.colour) {
 
-                    if (result[lamp].state.all_on) {
-                        lightstatus.classList.add("lights-all-on")
-                    }
-                    else {
-                        if (result[lamp].state.any_on) {
-                            lightstatus.classList.add("lights-partial-on")
-                        }
-                    }
-                }
-                lightsallLabel.appendChild(lightstatus);
-                row.appendChild(lightsallLabel);
-                table.appendChild(row);
-            }
-            wrapper.appendChild(table);
-        } else {
-            wrapper.innerHTML = this.translate("NO_DATA");
-            wrapper.className = "dimmed light small";
-        }
-        return wrapper;
-    },
+					if (result[lamp].state.all_on) {
+						lightstatus.classList.add('lights-all-on');
+					}
+					else {
+						if (result[lamp].state.any_on) {
+							lightstatus.classList.add('lights-partial-on');
+						}
+					}
+				}
+				lightsallLabel.appendChild(lightstatus);
+				row.appendChild(lightsallLabel);
+				table.appendChild(row);
+			}
 
-    createLabelRow: function () {
+			wrapper.appendChild(table);
+		} else {
+			wrapper.innerHTML = this.translate('NO_DATA');
+			wrapper.className = 'dimmed light small';
+		}
+		return wrapper;
+	},
 
-        var labelRow = document.createElement("tr");
+	createLabelRow: function () {
 
-        var roomiconlabel = document.createElement("th");
-        var typeIcon = document.createElement("room");
-        typeIcon.classList.add("fa", "fa-home");
-        roomiconlabel.appendChild(typeIcon);
-        labelRow.appendChild(roomiconlabel);
+		var labelRow = document.createElement('tr');
 
-        var lightsonlabel = document.createElement("th");
-        lightsonlabel.classList.add("centered");
-        var typeIcon = document.createElement("lightson");
-        //typeIcon.classList.add("fa", "fa-lightbulb-o");
-        typeIcon.innerHTML = this.translate("LIGHTS_ON");
-        lightsonlabel.appendChild(typeIcon);
-        labelRow.appendChild(lightsonlabel);
+		var roomiconlabel = document.createElement('th');
+		var typeIcon = document.createElement('room');
+		typeIcon.classList.add('fa', 'fa-home');
+		roomiconlabel.appendChild(typeIcon);
+		labelRow.appendChild(roomiconlabel);
 
-        var lightsonlabel = document.createElement("th");
-        lightsonlabel.classList.add("centered");
+		var lightsonlabel = document.createElement('th');
+		lightsonlabel.classList.add('centered');
+		var typeIcon = document.createElement('lightson');
+		//typeIcon.classList.add("fa", "fa-lightbulb-o");
+		typeIcon.innerHTML = this.translate('LIGHTS_ON');
+		lightsonlabel.appendChild(typeIcon);
+		labelRow.appendChild(lightsonlabel);
 
-        return labelRow;
-    }
-    ,
-    getData: function () {
-        $.getJSON(this.url, (data) => {
-            this.result = data;
-            this.updateDom();
-        });
-    },
+		var lightsonlabel = document.createElement('th');
+		lightsonlabel.classList.add('centered');
+
+		return labelRow;
+	},
+	getData: function () {
+		var promiseHue = $.getJSON(this.url);
+
+		var promises = [];
+
+		for (i = 0; i < this.homebridgeUrls.length; i++) {
+			promises.push($.getJSON(this.url));
+		}
+
+		Promise.all([promises, promiseHue]).then(([data, dataHue]) => {
+			this.result = dataHue;
+
+			var homebridgeData = data;
+
+
+			Object.assign({}, this.result, );
+
+		});
+
+	}
 });
